@@ -1,0 +1,40 @@
+{
+  "model": "Random Forest Classification",
+  "n_estimators": 10,
+  "criterion": "entropy",
+  "random_state": 0,
+  "test_size": 0.25,
+  "total_samples": 400,
+  "train_samples": 300,
+  "test_samples": 100,
+  "accuracy": 0.91,
+  "precision": 0.8485,
+  "recall": 0.875,
+  "f1_score": 0.8615,
+  "confusion_matrix": [
+    [
+      63,
+      5
+    ],
+    [
+      4,
+      28
+    ]
+  ],
+  "feature_names": [
+    "Age",
+    "EstimatedSalary"
+  ],
+  "classes": [
+    "Not Purchased (0)",
+    "Purchased (1)"
+  ],
+  "age_min": 18,
+  "age_max": 60,
+  "salary_min": 15000,
+  "salary_max": 150000,
+  "feature_importances": [
+    0.4977165631239794,
+    0.5022834368760206
+  ]
+}

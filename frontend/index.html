@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AdPredict — Social Network Ad Purchase Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Epilogue:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f5f2eb;
+      --ink: #1a1612;
+      --muted: #7a7368;
+      --border: #d8d2c7;
+      --forest: #2d5a3d;
+      --forest-light: #4a8a5f;
+      --forest-pale: #e8f2eb;
+      --amber: #c8860a;
+      --amber-pale: #fdf4e3;
+      --red: #b03030;
+      --red-pale: #fceaea;
+      --surface: #ffffff;
+      --shadow: rgba(26,22,18,0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Epilogue', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* Grain overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.5;
+    }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+    /* HEADER */
+    header {
+      padding: 28px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid var(--border);
+      margin-bottom: 56px;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-tree { font-size: 22px; }
+    .logo em { color: var(--forest); font-style: normal; }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 100px;
+    }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    .hero-eyebrow {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--forest);
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(38px, 5vw, 64px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.0;
+      margin-bottom: 20px;
+    }
+    h1 .line2 {
+      display: block;
+      color: var(--forest);
+      font-style: italic;
+    }
+    .hero-desc {
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 300;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* STATS BAND */
+    .stats-band {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--surface);
+      margin-bottom: 48px;
+    }
+    .stat-box {
+      padding: 22px 24px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .stat-box:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--forest);
+      display: block;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 0.3px; }
+
+    /* LAYOUT */
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    /* CARD */
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 2px 20px var(--shadow);
+    }
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .card-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    .card-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      background: var(--forest-pale);
+      color: var(--forest);
+      font-weight: 500;
+    }
+
+    /* FORM */
+    .field { margin-bottom: 28px; }
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .field-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* Custom range slider */
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 3px;
+      background: var(--border);
+      border-radius: 100px;
+      outline: none;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      background: var(--forest);
+      border-radius: 50%;
+      border: 3px solid var(--surface);
+      box-shadow: 0 0 0 2px var(--forest), 0 3px 8px rgba(45,90,61,0.3);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    .range-ends {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+    /* PREDICT BTN */
+    .predict-btn {
+      width: 100%;
+      padding: 16px 24px;
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .predict-btn:hover { background: var(--forest); transform: translateY(-1px); }
+    .predict-btn:active { transform: translateY(0); }
+    .predict-btn.loading { opacity: 0.6; pointer-events: none; }
+
+    /* RESULT */
+    .result-idle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 48px 24px;
+      gap: 12px;
+    }
+    .result-idle-icon { font-size: 48px; opacity: 0.25; }
+    .result-idle-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .result-content { display: none; }
+
+    .verdict-block {
+      text-align: center;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .verdict-icon { font-size: 52px; margin-bottom: 12px; }
+    .verdict-label {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .verdict-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .verdict-text.bought { color: var(--forest); }
+    .verdict-text.notbought { color: var(--red); }
+
+    .prob-bars { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .prob-row { display: flex; flex-direction: column; gap: 6px; }
+    .prob-meta { display: flex; justify-content: space-between; font-size: 13px; }
+    .prob-name { font-weight: 500; }
+    .prob-pct { font-weight: 700; color: var(--forest); font-family: 'Syne', sans-serif; }
+    .prob-track {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 100px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .prob-fill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0;
+      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .prob-fill.green { background: linear-gradient(90deg, var(--forest-light), var(--forest)); }
+    .prob-fill.red { background: linear-gradient(90deg, #d46060, var(--red)); }
+
+    .conf-chip {
+      background: var(--forest-pale);
+      border: 1px solid rgba(45,90,61,0.2);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .conf-chip-label { font-size: 13px; color: var(--forest); font-weight: 500; }
+    .conf-chip-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--forest);
+    }
+
+    /* BOTTOM ROW */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    /* Feature importance */
+    .feat-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .feat-row:last-child { border-bottom: none; }
+    .feat-name { flex: 1; font-size: 14px; font-weight: 500; }
+    .feat-track { flex: 2; height: 5px; background: var(--bg); border-radius: 100px; overflow: hidden; border: 1px solid var(--border); }
+    .feat-fill { height: 100%; background: var(--forest); border-radius: 100px; }
+    .feat-pct { font-size: 12px; color: var(--muted); min-width: 40px; text-align: right; font-weight: 500; }
+
+    /* Confusion matrix */
+    .cm-grid {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 6px;
+      align-items: center;
+    }
+    .cm-axis {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-align: center;
+      padding: 0 4px;
+    }
+    .cm-header {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .cm-cell {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 12px;
+      text-align: center;
+    }
+    .cm-cell.tp, .cm-cell.tn {
+      background: var(--forest-pale);
+      border-color: rgba(45,90,61,0.25);
+    }
+    .cm-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink);
+      display: block;
+    }
+    .cm-cell.tp .cm-num, .cm-cell.tn .cm-num { color: var(--forest); }
+    .cm-tag { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+
+    /* METRICS GRID */
+    .metrics-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    .metric-chip {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .metric-chip-label { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 4px; }
+    .metric-chip-val { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+    .metric-chip-val.green { color: var(--forest); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: var(--bg);
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: all 0.25s;
+      z-index: 998;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.err { background: var(--red); }
+    .toast.ok { background: var(--forest); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      .stats-band { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <span class="logo-tree">🌲</span>
+      Ad<em>Predict</em>
+    </div>
+    <div class="header-tag">Random Forest · Social Network Ads</div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-eyebrow">Predictive Analytics · Classification</div>
+    <h1>Will they click<span class="line2">"Purchase"?</span></h1>
+    <p class="hero-desc">Enter a user's age and estimated salary to predict whether they'll buy the advertised product on a social network — powered by Random Forest.</p>
+  </div>
+
+  <!-- Stats band -->
+  <div class="stats-band" id="statsBand">
+    <div class="stat-box">
+      <span class="stat-num" id="sAcc">—</span>
+      <div class="stat-label">Accuracy</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" id="sF1">—</span>
+      <div class="stat-label">F1 Score</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" id="sSamples">—</span>
+      <div class="stat-label">Dataset Size</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">10</span>
+      <div class="stat-label">Trees in Forest</div>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div class="layout">
+
+    <!-- INPUT -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">User Profile</div>
+          <div class="card-sub">Adjust the sliders to set user attributes</div>
+        </div>
+        <div class="card-badge">2 Features</div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Age</span>
+          <span class="field-val" id="ageVal">35</span>
+        </div>
+        <input type="range" id="ageSlider" min="18" max="60" value="35" oninput="updateAge(this.value)"/>
+        <div class="range-ends"><span>18 yrs</span><span>60 yrs</span></div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Estimated Salary</span>
+          <span class="field-val" id="salaryVal">$50,000</span>
+        </div>
+        <input type="range" id="salarySlider" min="15000" max="150000" step="1000" value="50000" oninput="updateSalary(this.value)"/>
+        <div class="range-ends"><span>$15k</span><span>$150k</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="predict-btn" id="predictBtn" onclick="predict()">
+        🌲 Predict Purchase
+      </button>
+
+      <div style="margin-top:16px; text-align:center; font-size:12px; color:var(--muted)">
+        Uses <strong>StandardScaler</strong> + <strong>RandomForestClassifier(n_estimators=10, criterion='entropy')</strong>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="card" id="resultCard">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Prediction</div>
+          <div class="card-sub">Model output & probabilities</div>
+        </div>
+      </div>
+
+      <div class="result-idle" id="idleEl">
+        <div class="result-idle-icon">🎯</div>
+        <div class="result-idle-text">Set the user profile on the left<br>and click Predict to see results</div>
+      </div>
+
+      <div class="result-content" id="resultContent">
+        <div class="verdict-block">
+          <div class="verdict-icon" id="verdictIcon">—</div>
+          <div class="verdict-label">Prediction</div>
+          <div class="verdict-text" id="verdictText">—</div>
+        </div>
+
+        <div class="prob-bars">
+          <div class="prob-row">
+            <div class="prob-meta">
+              <span class="prob-name">📦 Purchased</span>
+              <span class="prob-pct" id="probBuyPct">—</span>
+            </div>
+            <div class="prob-track"><div class="prob-fill green" id="probBuyBar"></div></div>
+          </div>
+          <div class="prob-row">
+            <div class="prob-meta">
+              <span class="prob-name">🚫 Not Purchased</span>
+              <span class="prob-pct" id="probNoBuyPct">—</span>
+            </div>
+            <div class="prob-track"><div class="prob-fill red" id="probNoBuyBar"></div></div>
+          </div>
+        </div>
+
+        <div class="conf-chip">
+          <div class="conf-chip-label">🌲 Forest Confidence</div>
+          <div class="conf-chip-val" id="confVal">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="bottom-grid">
+
+    <!-- Confusion Matrix -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Confusion Matrix</div>
+          <div class="card-sub">On 100-sample test set</div>
+        </div>
+      </div>
+
+      <div style="text-align:center; font-size:11px; color:var(--muted); margin-bottom:8px; letter-spacing:1px;">PREDICTED</div>
+      <div class="cm-grid" id="cmGrid">
+        <div></div>
+        <div class="cm-header">Not Bought</div>
+        <div class="cm-header">Bought</div>
+        <div class="cm-axis">ACTUAL</div>
+        <div class="cm-cell tn">
+          <span class="cm-num" id="cmTN">—</span>
+          <div class="cm-tag">TRUE NEG</div>
+        </div>
+        <div class="cm-cell fp">
+          <span class="cm-num" id="cmFP">—</span>
+          <div class="cm-tag">FALSE POS</div>
+        </div>
+        <div style=""></div>
+        <div class="cm-cell fn">
+          <span class="cm-num" id="cmFN">—</span>
+          <div class="cm-tag">FALSE NEG</div>
+        </div>
+        <div class="cm-cell tp">
+          <span class="cm-num" id="cmTP">—</span>
+          <div class="cm-tag">TRUE POS</div>
+        </div>
+      </div>
+
+      <div class="metrics-2col">
+        <div class="metric-chip">
+          <div class="metric-chip-label">ACCURACY</div>
+          <div class="metric-chip-val green" id="mAcc">—</div>
+        </div>
+        <div class="metric-chip">
+          <div class="metric-chip-label">PRECISION</div>
+          <div class="metric-chip-val" id="mPrec">—</div>
+        </div>
+        <div class="metric-chip">
+          <div class="metric-chip-label">RECALL</div>
+          <div class="metric-chip-val" id="mRec">—</div>
+        </div>
+        <div class="metric-chip">
+          <div class="metric-chip-label">F1 SCORE</div>
+          <div class="metric-chip-val" id="mF1">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Importance -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Feature Importances</div>
+          <div class="card-sub">What drives the prediction</div>
+        </div>
+      </div>
+
+      <div id="featImp">
+        <div style="font-size:13px;color:var(--muted)">Loading...</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div style="font-size:13px; color:var(--muted); line-height:1.7">
+        <strong style="color:var(--ink)">Model:</strong> Random Forest (10 trees, entropy criterion)<br/>
+        <strong style="color:var(--ink)">Split:</strong> 75% train / 25% test (random_state=0)<br/>
+        <strong style="color:var(--ink)">Scaling:</strong> StandardScaler on both features<br/>
+        <strong style="color:var(--ink)">Dataset:</strong> Social Network Ads — 400 samples
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'https://social-ads-rf.onrender.com/api';
+  let ageVal = 35;
+  let salaryVal = 50000;
+
+  function updateAge(v) {
+    ageVal = parseInt(v);
+    document.getElementById('ageVal').textContent = v + ' yrs';
+  }
+
+  function updateSalary(v) {
+    salaryVal = parseInt(v);
+    document.getElementById('salaryVal').textContent = '$' + parseInt(v).toLocaleString();
+  }
+
+  function toast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  async function loadStats() {
+    try {
+      const r = await fetch(API + '/stats');
+      const d = await r.json();
+
+      document.getElementById('sAcc').textContent = (d.accuracy * 100).toFixed(1) + '%';
+      document.getElementById('sF1').textContent = (d.f1_score * 100).toFixed(1) + '%';
+      document.getElementById('sSamples').textContent = d.total_samples;
+
+      // Confusion matrix
+      const cm = d.confusion_matrix;
+      document.getElementById('cmTN').textContent = cm[0][0];
+      document.getElementById('cmFP').textContent = cm[0][1];
+      document.getElementById('cmFN').textContent = cm[1][0];
+      document.getElementById('cmTP').textContent = cm[1][1];
+
+      document.getElementById('mAcc').textContent = (d.accuracy * 100).toFixed(1) + '%';
+      document.getElementById('mPrec').textContent = (d.precision * 100).toFixed(1) + '%';
+      document.getElementById('mRec').textContent = (d.recall * 100).toFixed(1) + '%';
+      document.getElementById('mF1').textContent = (d.f1_score * 100).toFixed(1) + '%';
+
+      // Feature importances
+      const features = d.feature_names;
+      const imps = d.feature_importances;
+      const max = Math.max(...imps);
+      document.getElementById('featImp').innerHTML = features.map((f, i) => `
+        <div class="feat-row">
+          <div class="feat-name">${f}</div>
+          <div class="feat-track">
+            <div class="feat-fill" style="width:${(imps[i]/max*100).toFixed(1)}%"></div>
+          </div>
+          <div class="feat-pct">${(imps[i]*100).toFixed(1)}%</div>
+        </div>
+      `).join('');
+    } catch(e) {
+      document.getElementById('sAcc').textContent = '91%';
+      document.getElementById('featImp').innerHTML = '<div style="font-size:13px;color:var(--muted)">Start the backend server to load stats.</div>';
+    }
+  }
+
+  async function predict() {
+    const btn = document.getElementById('predictBtn');
+    btn.classList.add('loading');
+    btn.innerHTML = '<span class="spinner"></span> Predicting…';
+
+    try {
+      const res = await fetch(API + '/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ age: ageVal, salary: salaryVal })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        document.getElementById('idleEl').style.display = 'none';
+        document.getElementById('resultContent').style.display = 'block';
+
+        const bought = data.prediction === 1;
+        document.getElementById('verdictIcon').textContent = bought ? '✅' : '❌';
+        const vt = document.getElementById('verdictText');
+        vt.textContent = data.label;
+        vt.className = 'verdict-text ' + (bought ? 'bought' : 'notbought');
+
+        const buyPct = (data.probability_purchased * 100).toFixed(1) + '%';
+        const noPct = (data.probability_not_purchased * 100).toFixed(1) + '%';
+        document.getElementById('probBuyPct').textContent = buyPct;
+        document.getElementById('probNoBuyPct').textContent = noPct;
+        document.getElementById('confVal').textContent = (data.confidence * 100).toFixed(1) + '%';
+
+        setTimeout(() => {
+          document.getElementById('probBuyBar').style.width = (data.probability_purchased * 100) + '%';
+          document.getElementById('probNoBuyBar').style.width = (data.probability_not_purchased * 100) + '%';
+        }, 50);
+
+        toast('Prediction complete!', 'ok');
+      } else {
+        toast('Error: ' + data.error, 'err');
+      }
+    } catch(e) {
+      toast('Cannot reach backend. Run: python backend/app.py', 'err');
+    }
+
+    btn.classList.remove('loading');
+    btn.innerHTML = '🌲 Predict Purchase';
+  }
+
+  loadStats();
+</script>
+</body>
+</html>
