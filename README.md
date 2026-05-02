@@ -1,5 +1,5 @@
-# 🌲 AdPredict — Random Forest Classification
-### Predictive Analytics Term Submission
+#  AdPredict — Turning Social Signals into Real Results
+![Cover Image](./assets/cover (3).png)
 
 A complete end-to-end ML application predicting whether a social network user will purchase an advertised product, built using the exact code from `random_forest_classification.ipynb` on the `Social_Network_Ads.csv` dataset.
 
